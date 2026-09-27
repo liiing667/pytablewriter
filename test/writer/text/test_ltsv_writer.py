@@ -22,9 +22,9 @@ normal_test_data_list = [
         value=value_matrix,
         expected=dedent(
             """\
-            a:1\tb:123.1\tc:"a"\tdd:1\te:1
-            a:2\tb:2.2\tc:"bb"\tdd:2.2\te:2.2
-            a:3\tb:3.3\tc:"ccc"\tdd:3\te:"cccc"
+            a:1\tb:123.1\tc:a\tdd:1\te:1
+            a:2\tb:2.2\tc:bb\tdd:2.2\te:2.2
+            a:3\tb:3.3\tc:ccc\tdd:3\te:cccc
             """
         ),
     ),
@@ -39,9 +39,9 @@ normal_test_data_list = [
         ],
         expected=dedent(
             """\
-            a:1\tc:"a"\tdd:1
+            a:1\tc:a\tdd:1
             b:2.2\tdd:2.2\te:2.2
-            a:3\tb:3.3\tc:"ccc"\te:"cccc"
+            a:3\tb:3.3\tc:ccc\te:cccc
             """
         ),
     ),
@@ -50,7 +50,7 @@ normal_test_data_list = [
         value=[["a\0b", "c   d", "e\tf", "g\nh", "i\r\nj"]],
         expected=dedent(
             """\
-            a0:"a\0b"\ta1:"c   d"\ta.2:"e  f"\ta_3:"g h"\ta-4:"i j"
+            a0:a\0b\ta1:c   d\ta.2:e  f\ta_3:g h\ta-4:i j
             """
         ),
     ),

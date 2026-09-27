@@ -297,6 +297,30 @@ class Test_AsciiDocTableWriter_write_table:
 
         assert strip_ansi_escape(output) == expected
 
+    def test_normal_escape_pipe_char(self):
+        writer = table_writer_class(
+            headers=["c|1", "c2"],
+            value_matrix=[["a|b", "x"]],
+        )
+
+        expected = dedent(
+            """\
+            [cols="<3, <2", options="header"]
+            |===
+            ^|c\\|1
+            ^|c2
+
+            |a\\|b
+            |x
+            |===
+            """
+        )
+        output = writer.dumps()
+
+        print_test_result(expected=expected, actual=output)
+
+        assert output == expected
+
     def test_normal_style_color(self):
         column_styles = [
             Style(fg_color="red"),

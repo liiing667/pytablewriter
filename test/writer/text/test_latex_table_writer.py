@@ -115,3 +115,22 @@ class Test_LatexTableWriter_write_table:
 
         assert regexp_ansi_escape.search(out)
         assert strip_ansi_escape(out) == expected
+
+    def test_normal_verb_delimiter(self, capsys):
+        # a \verb delimiter character that does not conflict with
+        # the value should be selected
+        writer = table_writer_class(headers=["c|1"], value_matrix=[["a|b"]])
+        writer.write_table()
+
+        expected = (
+            "\\begin{array}{l} \\hline\n"
+            "    \\verb!c|1! \\\\ \\hline\n"
+            "    \\hline\n"
+            "    \\verb!a|b! \\\\ \\hline\n"
+            "\\end{array}\n"
+        )
+
+        out, err = capsys.readouterr()
+        print_test_result(expected=expected, actual=out, error=err)
+
+        assert strip_ansi_escape(out) == expected

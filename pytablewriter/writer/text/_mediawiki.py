@@ -85,10 +85,24 @@ class MediaWikiTableWriter(TextTableWriter):
     def _get_closing_row_items(self) -> list[str]:
         return ["|}"]
 
+    @staticmethod
+    def __escape_pipe_char(value: str) -> str:
+        # escape pipe characters to avoid misinterpreting as cell separators
+        return value.replace("|", "&#124;")
+
+    def _apply_style_to_row_item(
+        self, row_idx: int, col_dp: ColumnDataProperty, value_dp: DataProperty, style: Style
+    ) -> str:
+        return self.__escape_pipe_char(
+            super()._apply_style_to_row_item(row_idx, col_dp, value_dp, style)
+        )
+
     def _apply_style_to_header_item(
         self, col_dp: ColumnDataProperty, value_dp: DataProperty, style: Style
     ) -> str:
-        value: Final = self._styler.apply(col_dp.dp_to_str(value_dp), style=style)
+        value: Final = self.__escape_pipe_char(
+            self._styler.apply(col_dp.dp_to_str(value_dp), style=style)
+        )
         str_format = "! {{:{:s}{:s}}}".format(
             get_align_char(Align.CENTER), str(self._get_padding_len(col_dp, value_dp))
         )

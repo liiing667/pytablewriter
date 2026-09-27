@@ -1,4 +1,5 @@
 import copy
+import html
 import warnings
 from typing import Any, Final, Optional, cast
 
@@ -57,6 +58,16 @@ class HtmlTableWriter(TextTableWriter):
         self._table_tag: Any = None
 
         self.enable_ansi_escape = False
+
+        # escape HTML special characters at render time. escaping at the
+        # preprocessor level would also escape <br> line-break replacements
+        self.is_escape_html_tag = kwargs.get("is_escape_html_tag", True)
+
+    def update_preprocessor(self, **kwargs: Any) -> None:
+        if "is_escape_html_tag" in kwargs:
+            self.is_escape_html_tag = kwargs.pop("is_escape_html_tag")
+
+        super().update_preprocessor(**kwargs)
 
     def write_table(self, **kwargs: Any) -> None:
         """
@@ -136,7 +147,7 @@ class HtmlTableWriter(TextTableWriter):
 
         tr_tag = tags.tr()
         for header in self._table_headers:
-            tr_tag += tags.th(raw(MultiByteStrDecoder(header).unicode_str))
+            tr_tag += tags.th(raw(self.__escape_html(MultiByteStrDecoder(header).unicode_str)))
 
         thead_tag = tags.thead()
         thead_tag += tr_tag
@@ -152,7 +163,7 @@ class HtmlTableWriter(TextTableWriter):
         ):
             tr_tag = tags.tr()
             for value, value_dp, column_dp in zip(values, value_dp_list, self._column_dp_list):
-                td_tag = tags.td(raw(MultiByteStrDecoder(value).unicode_str))
+                td_tag = tags.td(raw(self.__escape_html(MultiByteStrDecoder(value).unicode_str)))
 
                 style = self._fetch_style(row_idx, column_dp, value_dp)
 
@@ -192,3 +203,11 @@ class HtmlTableWriter(TextTableWriter):
 
     def _create_styler(self, writer: AbstractTableWriter) -> StylerInterface:
         return HtmlStyler(writer)
+
+    def __escape_html(self, value: str) -> str:
+        if not self.is_escape_html_tag:
+            return value
+
+        # escape HTML special characters while preserving <br> tags
+        # that inserted as line-break replacements
+        return "<br>".join(html.escape(part) for part in value.split("<br>"))

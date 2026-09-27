@@ -203,7 +203,12 @@ class LatexTableWriter(LatexWriter):
         return True
 
     def __verbatim(self, value: str) -> str:
-        return r"\verb" + f"|{value:s}|"
+        # select a \verb delimiter character that does not appear in the value
+        for delim in "|!+;:?@#~%^=&`',./<>-_\"()":
+            if delim not in value:
+                return r"\verb" + f"{delim}{value:s}{delim}"
+
+        raise ValueError(f"unable to find a \\verb delimiter for the value: {value}")
 
     def _to_header_item(self, col_dp: ColumnDataProperty, value_dp: DataProperty) -> str:
         return self.__verbatim(super()._to_header_item(col_dp, value_dp))

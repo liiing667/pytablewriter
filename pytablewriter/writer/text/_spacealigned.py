@@ -2,6 +2,7 @@ import copy
 from typing import Any
 
 import dataproperty
+from dataproperty import LineBreakHandling
 
 from ._csv import CsvTableWriter
 
@@ -37,3 +38,10 @@ class SpaceAlignedTableWriter(CsvTableWriter):
         self.is_formatting_float = kwargs.get("is_formatting_float", True)
 
         self._quoting_flags = copy.deepcopy(dataproperty.NOT_QUOTING_FLAGS)
+
+        # replace line breaks with spaces to keep rows in a single line
+        self.update_preprocessor(line_break_handling=LineBreakHandling.REPLACE)
+
+    def _escape_csv_item(self, value: str, is_quote: bool) -> str:
+        # do not quote/escape values for space-aligned format
+        return value

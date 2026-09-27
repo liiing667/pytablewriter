@@ -459,6 +459,55 @@ class Test_HtmlTableWriter_write_table:
         print_test_result(expected=expected, actual=out, error=err)
         assert out == expected
 
+    def test_normal_escape_html_tag(self, capsys):
+        writer = table_writer_class(
+            headers=["h<b>"],
+            value_matrix=[["<script>alert(1)</script> & \"x\"\nline2"]],
+        )
+        writer.write_table()
+
+        expected = """\
+<table>
+    <thead>
+        <tr>
+            <th>h&lt;b&gt;</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td align="left">&lt;script&gt;alert(1)&lt;/script&gt; &amp; &quot;x&quot;<br>line2</td>
+        </tr>
+    </tbody>
+</table>
+"""
+        out, err = capsys.readouterr()
+        print_test_result(expected=expected, actual=out, error=err)
+        assert out == expected
+
+    def test_normal_escape_html_tag_disabled(self, capsys):
+        writer = table_writer_class(
+            headers=["h"], value_matrix=[["<b>bold</b>"]], is_escape_html_tag=False
+        )
+        writer.write_table()
+
+        expected = """\
+<table>
+    <thead>
+        <tr>
+            <th>h</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td align="left"><b>bold</b></td>
+        </tr>
+    </tbody>
+</table>
+"""
+        out, err = capsys.readouterr()
+        print_test_result(expected=expected, actual=out, error=err)
+        assert out == expected
+
     def test_normal_write_css(self, capsys):
         writer = table_writer_class(
             table_name="Write HTML with CSS",
