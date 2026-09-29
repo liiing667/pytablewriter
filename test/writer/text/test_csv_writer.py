@@ -3,6 +3,8 @@
 """
 
 import collections
+import csv
+import io
 import itertools
 from textwrap import dedent
 
@@ -117,11 +119,9 @@ normal_test_data_list = [
         col_delim=",",
         header=["a\nb", "c\n\nd", "e\r\nf"],
         value=[["v1\nv1", "v2\n\nv2", "v3\r\nv3"]],
-        expected=dedent(
-            """\
-            "a b","c  d","e f"
-            "v1 v1","v2  v2","v3 v3"
-            """
+        # line breaks are preserved within quoted fields (RFC 4180)
+        expected=(
+            '"a\nb","c\n\nd","e\r\nf"\n' '"v1\nv1","v2\n\nv2","v3\r\nv3"\n'
         ),
     ),
 ]
@@ -158,13 +158,11 @@ class Test_CsvTableWriter_from_csv:
         """
     )
 
-    __CSV_EXPECTED = dedent(
-        """\
-        "a","b","c","dd","e"
-        1,1.1,"a",1,
-        2,2.2,,2.2,2.2
-        3,3.3,"ccc",,"cc cc"
-        """
+    __CSV_EXPECTED = (
+        '"a","b","c","dd","e"\n'
+        '1,1.1,"a",1,\n'
+        "2,2.2,,2.2,2.2\n"
+        '3,3.3,"ccc",,"cc\ncc"\n'
     )
 
     def test_normal_from_text(self, capsys):
@@ -232,7 +230,23 @@ class Test_CsvTableWriter_write_table:
         writer.update_preprocessor(is_escape_formula_injection=True)
         writer.write_table()
         expected = r""""a","b","c","d","e"
-"a+b","\"=a+b","\"-a+b","\"+a+b","\"@a+b"
+"a+b","'=a+b","'-a+b","'+a+b","'@a+b"
+"""
+        out, err = capsys.readouterr()
+        print_test_result(expected=expected, actual=out, error=err)
+
+        assert out == expected
+
+    def test_normal_escape_formula_injection_constructor(self, capsys):
+        writer = table_writer_class(
+            headers=["a", "b"],
+            value_matrix=[["=a+b", "normal"]],
+            is_escape_formula_injection=True,
+        )
+        writer.write_table()
+        expected = """\
+"a","b"
+"'=a+b","normal"
 """
         out, err = capsys.readouterr()
         print_test_result(expected=expected, actual=out, error=err)
@@ -248,6 +262,37 @@ class Test_CsvTableWriter_write_table:
 
         assert writer.dumps() == ""
         assert str(writer) == ""
+
+    def test_normal_escape_special_chars(self, capsys):
+        writer = table_writer_class(
+            headers=["h1", "h2", "h3"],
+            value_matrix=[["double \" quote", "with,comma", "single ' quote"]],
+        )
+        writer.write_table()
+
+        expected = """\
+"h1","h2","h3"
+"double "" quote","with,comma","single ' quote"
+"""
+        out, err = capsys.readouterr()
+        print_test_result(expected=expected, actual=out, error=err)
+
+        assert out == expected
+
+    def test_normal_roundtrip(self):
+        headers = ["c1", "c2", "c3"]
+        value_matrix = [
+            ["=SUM(A1:A2)", "quote ' and \"double\"", "with,comma"],
+            ["line1\nline2", "cr\r\nlf", "normal"],
+        ]
+
+        writer = table_writer_class(headers=headers, value_matrix=value_matrix)
+        out = writer.dumps()
+
+        rows = list(csv.reader(io.StringIO(out)))
+
+        assert rows[0] == headers
+        assert rows[1:] == value_matrix
 
 
 class Test_CsvTableWriter_write_table_iter:

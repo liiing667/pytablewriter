@@ -85,6 +85,18 @@ class AsciiDocTableWriter(TextTableWriter):
     def _create_styler(self, writer: AbstractTableWriter) -> StylerInterface:
         return AsciiDocStyler(writer)
 
+    @staticmethod
+    def __escape_pipe_char(value: str) -> str:
+        # escape pipe characters to avoid misinterpreting as cell separators
+        return value.replace("|", r"\|")
+
+    def _apply_style_to_row_item(
+        self, row_idx: int, col_dp: ColumnDataProperty, value_dp: DataProperty, style: Style
+    ) -> str:
+        return self.__escape_pipe_char(
+            super()._apply_style_to_row_item(row_idx, col_dp, value_dp, style)
+        )
+
     def _write_value_row(
         self, row: int, values: Sequence[str], value_dp_list: Sequence[DataProperty]
     ) -> None:
@@ -125,7 +137,7 @@ class AsciiDocTableWriter(TextTableWriter):
     def _apply_style_to_header_item(
         self, col_dp: ColumnDataProperty, value_dp: DataProperty, style: Style
     ) -> str:
-        value = self._styler.apply(col_dp.dp_to_str(value_dp), style=style)
+        value = self.__escape_pipe_char(self._styler.apply(col_dp.dp_to_str(value_dp), style=style))
         return self.__apply_align(value, style)
 
     def __modify_row_element(

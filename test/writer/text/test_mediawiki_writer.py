@@ -299,6 +299,28 @@ class Test_MediaWikiTableWriter_write_table:
 
         assert output == expected
 
+    def test_normal_escape_pipe_char(self):
+        writer = table_writer_class(
+            headers=["c|1", "c2"],
+            value_matrix=[["a|b", "x"]],
+        )
+        expected = dedent(
+            """\
+            {| class="wikitable"
+            ! c&#124;1
+            ! c2
+            |-
+            | a&#124;b
+            | x
+            |}
+            """
+        )
+        output = writer.dumps()
+
+        print_test_result(expected=expected, actual=output)
+
+        assert output == expected
+
     @pytest.mark.parametrize(
         ["table", "header", "value", "expected"],
         [[data.table, data.header, data.value, data.expected] for data in null_test_data_list],

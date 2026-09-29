@@ -3,6 +3,8 @@
 """
 
 import collections
+import csv
+import io
 import itertools
 
 import pytest
@@ -101,3 +103,18 @@ class Test_TsvTableWriter_write_table:
 
         assert writer.dumps() == ""
         assert str(writer) == ""
+
+    def test_normal_roundtrip(self):
+        headers = ["c1", "c2", "c3"]
+        value_matrix = [
+            ["=SUM(A1:A2)", "quote ' and \"double\"", "with,comma"],
+            ["line1\nline2", "cr\r\nlf", "normal"],
+        ]
+
+        writer = table_writer_class(headers=headers, value_matrix=value_matrix)
+        out = writer.dumps()
+
+        rows = list(csv.reader(io.StringIO(out), delimiter="\t"))
+
+        assert rows[0] == headers
+        assert rows[1:] == value_matrix

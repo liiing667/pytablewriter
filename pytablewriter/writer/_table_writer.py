@@ -74,6 +74,12 @@ class AbstractTableWriter(TableWriterInterface, metaclass=abc.ABCMeta):
 
         dequote (bool): If |True|, dequote values in :py:attr:`~.value_matrix`.
 
+        is_escape_formula_injection (bool):
+            If |True|, escape formula injection by adding a single quote
+            prefix to string values that begin with formula characters
+            (``=``, ``+``, ``-``, ``@``). Effective for CSV/Excel writers.
+            Defaults to |False|.
+
     .. py:attribute:: stream
 
         Stream to write tables.
@@ -201,7 +207,10 @@ class AbstractTableWriter(TableWriterInterface, metaclass=abc.ABCMeta):
         self._dp_extractor = DataPropertyExtractor(max_precision=kwargs.get("max_precision"))
         self._dp_extractor.min_column_width = 1
         self._dp_extractor.strip_str_header = '"'
-        self._dp_extractor.preprocessor = Preprocessor(dequote=kwargs.get("dequote", True))
+        self._dp_extractor.preprocessor = Preprocessor(
+            dequote=kwargs.get("dequote", True),
+            is_escape_formula_injection=kwargs.get("is_escape_formula_injection", False),
+        )
         self._dp_extractor.set_type_value(Typecode.NONE, "")
         self._dp_extractor.matrix_formatting = MatrixFormatting.HEADER_ALIGNED
         self._dp_extractor.update_strict_level_map({Typecode.BOOL: 1})
@@ -895,8 +904,17 @@ class AbstractTableWriter(TableWriterInterface, metaclass=abc.ABCMeta):
         self.__clear_preprocess()
 
     def update_preprocessor(self, **kwargs: Any) -> None:
-        # TODO: documentation
-        #   is_escape_formula_injection: for CSV/Excel
+        """
+        Update the preprocessor of the writer.
+
+        Args:
+            is_escape_formula_injection (bool):
+                If |True|, escape formula injection by adding a single quote
+                prefix to string values that begin with formula characters
+                (``=``, ``+``, ``-``, ``@``). Effective for CSV/Excel writers.
+            line_break_handling (LineBreakHandling):
+                How to handle line breaks in values.
+        """
 
         if not self._dp_extractor.update_preprocessor(**kwargs):
             return

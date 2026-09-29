@@ -2,6 +2,7 @@ from typing import Any
 
 import pathvalidate
 import typepy
+from dataproperty import LineBreakHandling
 
 from ._csv import CsvTableWriter
 
@@ -31,6 +32,10 @@ class LtsvTableWriter(CsvTableWriter):
         self.is_write_header = False
 
         self._is_require_header = True
+
+        # tab characters and line breaks cannot be represented in LTSV
+        # format: replace them with spaces
+        self.update_preprocessor(line_break_handling=LineBreakHandling.REPLACE)
 
     def write_table(self, **kwargs: Any) -> None:
         """
